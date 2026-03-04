@@ -11,10 +11,8 @@ const app = express()
 app.use(cors())
 app.use(express.json({ limit: '50mb' }))
 
-// Serve frontend build files
 app.use(express.static(path.join(__dirname, 'dist')))
 
-// Gemini API proxy
 app.post('/api/messages', async (req, res) => {
   try {
     const { messages, system } = req.body
@@ -23,15 +21,18 @@ app.post('/api/messages', async (req, res) => {
     const userMessage = messages[0]
     const parts = []
 
-    if (system) {
-      parts.push({ text: system })
-    }
+    // Combine system + user instruction into one strong prompt
+    const fullPrompt = `${system}
+
+IMPORTANT: You MUST respond with ONLY a valid JSON object. No markdown, no backticks, no explanation. Just raw JSON starting with { and ending with }.
+
+Now analyze this invoice and return the JSON:`
+
+    parts.push({ text: fullPrompt })
 
     if (Array.isArray(userMessage.content)) {
       for (const block of userMessage.content) {
-        if (block.type === 'text') {
-          parts.push({ text: block.text })
-        } else if (block.type === 'image' && block.source) {
+        if (block.type === 'image' && block.source) {
           parts.push({
             inlineData: {
               mimeType: block.source.media_type,
@@ -54,6 +55,7 @@ app.post('/api/messages', async (req, res) => {
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: 4000,
+        responseMimeType: 'application/json'
       }
     }
 
@@ -67,18 +69,22 @@ app.post('/api/messages', async (req, res) => {
     )
 
     const data = await response.json()
+    console.log('Gemini response status:', response.status)
 
     if (data.error) {
+      console.error('Gemini error:', data.error)
       return res.status(400).json({ error: { message: data.error.message } })
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    console.log('Gemini text preview:', text.substring(0, 200))
+
     res.json({
       content: [{ type: 'text', text }]
     })
 
   } catch (err) {
-    console.error(err)
+    console.error('Server error:', err)
     res.status(500).json({ error: { message: err.message } })
   }
 })
