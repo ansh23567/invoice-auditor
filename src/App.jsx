@@ -467,14 +467,23 @@ export default function App() {
         text = raw.content.map(b => (b && b.text) ? b.text : '').join('');
       }
 
+      console.log('RAW RESPONSE:', JSON.stringify(raw).substring(0, 500));
+      console.log('TEXT:', text.substring(0, 300));
+
+      if (!text || text.trim() === '') {
+        throw new Error('AI returned empty response. Please try again.');
+      }
+
       let parsed = {};
       try {
-        const clean = (text || "").replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         parsed = JSON.parse(clean);
       } catch {
         const match = text.match(/\{[\s\S]*\}/);
         if (match) { try { parsed = JSON.parse(match[0]); } catch { parsed = {}; } }
       }
+
+      console.log('PARSED:', JSON.stringify(parsed).substring(0, 300));
 
       const enriched = {
         vendor_name: 'Unknown Vendor',
@@ -569,7 +578,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 24px' }}>
 
         {activeTab === 'upload' && (
           <div>
