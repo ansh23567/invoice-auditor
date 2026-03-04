@@ -54,8 +54,8 @@ Now analyze this invoice and return the JSON:`
       contents: [{ role: 'user', parts }],
       generationConfig: {
         temperature: 0.1,
-        maxOutputTokens: 4000,
-        responseMimeType: 'application/json'
+        maxOutputTokens: 8192,
+        
       }
     }
 
