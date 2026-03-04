@@ -569,7 +569,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 24px' }}>
 
         {activeTab === 'upload' && (
           <div>
