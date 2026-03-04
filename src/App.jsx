@@ -477,7 +477,28 @@ export default function App() {
         else throw new Error('Could not parse AI response');
       }
 
-      const enriched = { ...parsed, _filename: file.name };
+      // Ensure all fields exist with defaults to prevent crashes
+      const enriched = {
+        vendor_name: 'Unknown Vendor',
+        invoice_number: 'N/A',
+        invoice_date: 'N/A',
+        total_billed: 0,
+        currency: 'INR',
+        line_items: [],
+        extracted_gst: 0,
+        extracted_subtotal: 0,
+        discrepancies: [],
+        total_overcharge: 0,
+        correct_total: 0,
+        risk_score: 0,
+        risk_level: 'LOW',
+        audit_summary: 'Analysis complete.',
+        vendor_type: 'OTHER',
+        confidence: 80,
+        recommendations: [],
+        ...parsed,
+        _filename: file.name
+      };
       setCurrentResult(enriched);
       setResults(prev => [enriched, ...prev]);
       setActiveTab('result');
