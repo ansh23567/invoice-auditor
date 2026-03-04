@@ -469,7 +469,7 @@ export default function App() {
 
       let parsed = {};
       try {
-        const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const clean = (text || "").replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         parsed = JSON.parse(clean);
       } catch {
         const match = text.match(/\{[\s\S]*\}/);
