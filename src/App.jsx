@@ -457,37 +457,33 @@ export default function App() {
         })
       });
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error?.message || 'API error');
-      }
-
       setProcessingStatus('Parsing audit results...');
 
-      const data = await response.json();
-      const text = data.content.map(b => b.text || '').join('');
+      const raw = await response.json();
+      if (raw.error) throw new Error(raw.error?.message || 'API error');
 
-      let parsed;
+      let text = '';
+      if (raw.content && Array.isArray(raw.content)) {
+        text = raw.content.map(b => (b && b.text) ? b.text : '').join('');
+      }
+
+      let parsed = {};
       try {
         const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         parsed = JSON.parse(clean);
       } catch {
         const match = text.match(/\{[\s\S]*\}/);
-        if (match) parsed = JSON.parse(match[0]);
-        else throw new Error('Could not parse AI response');
+        if (match) { try { parsed = JSON.parse(match[0]); } catch { parsed = {}; } }
       }
 
-      // Ensure all fields exist with defaults to prevent crashes
       const enriched = {
         vendor_name: 'Unknown Vendor',
         invoice_number: 'N/A',
         invoice_date: 'N/A',
         total_billed: 0,
         currency: 'INR',
-        line_items: [],
         extracted_gst: 0,
         extracted_subtotal: 0,
-        discrepancies: [],
         total_overcharge: 0,
         correct_total: 0,
         risk_score: 0,
@@ -495,8 +491,10 @@ export default function App() {
         audit_summary: 'Analysis complete.',
         vendor_type: 'OTHER',
         confidence: 80,
-        recommendations: [],
         ...parsed,
+        line_items: Array.isArray(parsed.line_items) ? parsed.line_items : [],
+        discrepancies: Array.isArray(parsed.discrepancies) ? parsed.discrepancies : [],
+        recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
         _filename: file.name
       };
       setCurrentResult(enriched);
@@ -571,7 +569,7 @@ export default function App() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 24px' }}>
 
         {activeTab === 'upload' && (
           <div>
